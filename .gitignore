@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pkl
+*.egg-info/
+.env
+node_modules/
+build/
+nlp-service/models/*.pkl
+nlp-service/models/*.joblib
+nlp-service/data/

@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.core.service import predict
@@ -14,14 +15,26 @@ class BatchInput(BaseModel):
 
 
 @router.post("/predict")
-def predict_single(body: TextInput):
+async def predict_single(body: TextInput):
     if not body.text.strip():
         raise HTTPException(status_code=400, detail="text cannot be empty")
-    return predict(body.text)
+    try:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, predict, body.text)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/predict/batch")
-def predict_batch(body: BatchInput):
+async def predict_batch(body: BatchInput):
     if not body.texts:
         raise HTTPException(status_code=400, detail="texts list cannot be empty")
-    return [predict(t) for t in body.texts]
+    try:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, lambda: [predict(t) for t in body.texts])
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
